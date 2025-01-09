@@ -1,0 +1,39 @@
+// Tarvittavien moduulien lataus
+const db = require("../config/db.js"); // Tietokantayhteyden konfiguraatiomoduuli
+
+// Tiliin liittyvän tiedon (kuten tapahtumien) hallintaan tarkoitettu olio
+const accountinformation = {
+    // Hakee tilin tiedot, kuten tapahtumat, tietyn tilin ID:n perusteella
+    get: function(callback){
+        return db.query("SELECT idaccount,transactions,amount,date FROM account_information where idaccount = 1;", callback);
+    },
+    // Hakee luottotilin tiedot, kuten tapahtumat, tietyn tilin ID:n perusteella
+    getcredit: function(callback){
+        return db.query("SELECT idaccount,transactions,amount,date FROM account_information where idaccount = 4;", callback);
+    },
+    // Hakee tietyn kortin viimeisen tilikirjauksen numeron
+    getMaxaccountinformationNum: function(card_number, callback){
+        return db.query("SELECT COUNT(accountinformation_ID) AS maxCount FROM accountinformation WHERE idaccount = (SELECT card.idaccount FROM card WHERE card_number = ?)", [card_number], callback);
+    },
+    // Hakee tietyn kortin tietyn määrän viimeisimpiä tilikirjauksia
+    getByCardNumberFixed: function(card_number, callback){
+        return db.query("SELECT * FROM accountinformation WHERE idaccount = (SELECT card.idaccount FROM card WHERE card_number = ?) ORDER BY log_ID DESC LIMIT 10", [card_number], callback);
+    },
+    // Hakee tietyn kortin tietyn määrän tilikirjauksia määrätyn sivun kohdalta
+    getByCardNumber: function(card_number, x, callback){
+        return db.query("SELECT * FROM accountinformation WHERE idaccount = (SELECT card.idaccount FROM card WHERE card_number = ?) ORDER BY log_ID DESC LIMIT ?, 10", [card_number, x], callback);
+    },
+    // Lisää uuden tilikirjauksen tietokantaan
+    add: function(newaccountinformation, callback){
+        console.log("model");
+        return db.query("INSERT INTO account_information (date, transactions, amount, idaccount,idaccount_information) VALUES(?,?,?,?,?) ",
+        [newaccountinformation.date,newaccountinformation.transactions, newaccountinformation.amount, newaccountinformation.idaccount, newaccountinformation.idaccount_information], callback);
+    },
+    // Poistaa kaikki tilikirjaukset tietokannasta
+    delete: function( callback){
+        return db.query("DELETE FROM account_information ", callback);
+    },
+}
+
+// Viedään accountinformation-olio moduulina käytettäväksi muissa tiedostoissa
+module.exports = accountinformation;
